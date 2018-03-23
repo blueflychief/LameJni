@@ -30,6 +30,6 @@ $(LAME_LIBMP3_DIR)/set_get.c \
 $(LAME_LIBMP3_DIR)/takehiro.c \
 $(LAME_LIBMP3_DIR)/vbrquantize.c \
 $(LAME_LIBMP3_DIR)/version.c \
-MP3Recorder.c
+LameRecorder.c
 
 include $(BUILD_SHARED_LIBRARY)

@@ -1,21 +1,13 @@
-package com.infinite.lamejniapp.recorder;
+package com.infinite.lamejniapp.lame;
 
 /**
  * Created by Administrator on 3/23/2018.
  */
 
-public class MP3Recorder {
+public class Lame {
     static {
         System.loadLibrary("mp3lame");
     }
-
-
-
-
-
-
-
-
 
 
     /**

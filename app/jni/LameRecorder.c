@@ -3,11 +3,11 @@
 //
 
 #include "libmp3lame3995/lame.h"
-#include "MP3Recorder.h"
+#include "LameRecorder.h"
 
 static lame_global_flags *glf = NULL;
 
-JNIEXPORT void JNICALL Java_com_infinite_lamejniapp_recorder_MP3Recorder_init(
+JNIEXPORT void JNICALL Java_com_infinite_lamejniapp_lame_Lame_init__IIIII(
         JNIEnv *env, jclass cls, jint inSamplerate, jint outChannel,
         jint outSamplerate, jint outBitrate, jint quality) {
     if (glf != NULL) {
@@ -23,7 +23,7 @@ JNIEXPORT void JNICALL Java_com_infinite_lamejniapp_recorder_MP3Recorder_init(
     lame_init_params(glf);
 }
 
-JNIEXPORT jint JNICALL Java_com_infinite_lamejniapp_recorder_MP3Recorder_encode(
+JNIEXPORT jint JNICALL Java_com_infinite_lamejniapp_lame_Lame_encode(
         JNIEnv *env, jclass cls, jshortArray buffer_l, jshortArray buffer_r,
         jint samples, jbyteArray mp3buf) {
     jshort* j_buffer_l = (*env)->GetShortArrayElements(env, buffer_l, NULL);
@@ -43,7 +43,7 @@ JNIEXPORT jint JNICALL Java_com_infinite_lamejniapp_recorder_MP3Recorder_encode(
     return result;
 }
 
-JNIEXPORT jint JNICALL Java_com_infinite_lamejniapp_recorder_MP3Recorder_flush(
+JNIEXPORT jint JNICALL Java_com_infinite_lamejniapp_lame_Lame_flush(
         JNIEnv *env, jclass cls, jbyteArray mp3buf) {
     const jsize mp3buf_size = (*env)->GetArrayLength(env, mp3buf);
     jbyte* j_mp3buf = (*env)->GetByteArrayElements(env, mp3buf, NULL);
@@ -55,7 +55,7 @@ JNIEXPORT jint JNICALL Java_com_infinite_lamejniapp_recorder_MP3Recorder_flush(
     return result;
 }
 
-JNIEXPORT void JNICALL Java_com_infinite_lamejniapp_recorder_MP3Recorder_close(
+JNIEXPORT void JNICALL Java_com_infinite_lamejniapp_lame_Lame_close(
         JNIEnv *env, jclass cls) {
     lame_close(glf);
     glf = NULL;
