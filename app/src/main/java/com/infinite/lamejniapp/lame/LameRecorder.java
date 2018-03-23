@@ -126,6 +126,18 @@ public class LameRecorder {
         }.start();
     }
 
+
+    private void getVolume(int r, byte[] buffer1) {
+        long v = 0;
+        // 将 buffer 内容取出，进行平方和运算
+        for (int i = 0; i < buffer1.length; i++) {
+            v += buffer1[i] * buffer1[i];
+        }
+        // 平方和除以数据总长度，得到音量大小。
+        double mean = v / (double) r;
+        double volume = 10 * Math.log10(mean);
+    }
+
     /**
      * @throws IOException
      */

@@ -3,17 +3,19 @@ package com.infinite.lamejniapp.lame;
 import android.util.Log;
 
 /**
+ * 循环缓冲区
  * Created by Administrator on 3/23/2018.
  */
 
 public class RingBuffer {
+    private static final String TAG = RingBuffer.class.getSimpleName();
     private byte[] buffer;
 
-    private int size;
+    private int allSize;
 
-    private int rp;
+    private int remainPoint;
 
-    private int wp;
+    private int writePoint;
 
     /**
      * Initialize a ring buffer given number of bytes
@@ -21,30 +23,32 @@ public class RingBuffer {
      * @param size
      */
     public RingBuffer(int size) {
-        this.size = size;
+        this.allSize = size;
         buffer = new byte[size];
-        wp = rp = 0;
+        writePoint = remainPoint = 0;
     }
 
     /**
      * Check number of bytes left
      *
-     * @param byteWrite
+     * @param writeCheck
      * @return
      */
     private int checkSpace(boolean writeCheck) {
         int s;
         if (writeCheck) {
-            if (wp > rp) {
-                s = rp - wp + size - 1;
-            } else if (wp < rp) {
-                s = rp - wp - 1;
-            } else s = size - 1;
+            if (writePoint > remainPoint) {
+                s = remainPoint - writePoint + allSize - 1;
+            } else if (writePoint < remainPoint) {
+                s = remainPoint - writePoint - 1;
+            } else {
+                s = allSize - 1;
+            }
         } else {
-            if (wp > rp) {
-                s = wp - rp;
-            } else if (wp < rp) {
-                s = wp - rp + size;
+            if (writePoint > remainPoint) {
+                s = writePoint - remainPoint;
+            } else if (writePoint < remainPoint) {
+                s = writePoint - remainPoint + allSize;
             } else {
                 s = 0;
             }
@@ -62,16 +66,18 @@ public class RingBuffer {
     public int read(byte[] buffer, final int bytes) {
         int remaining;
         if ((remaining = checkSpace(false)) == 0) {
-            Log.d(RingBuffer.class.getSimpleName(), "No data");
+            Log.e(TAG, "No data");
             return 0;
         }
-        final int bytesread = bytes > remaining ? remaining : bytes;
+        final int bytesRead = bytes > remaining ? remaining : bytes;
         // copy from ring buffer to buffer
-        for (int i = 0; i < bytesread; ++i) {
-            buffer[i] = this.buffer[rp++];
-            if (rp == size) rp = 0;
+        for (int i = 0; i < bytesRead; ++i) {
+            buffer[i] = this.buffer[remainPoint++];
+            if (remainPoint == allSize) {
+                remainPoint = 0;
+            }
         }
-        return bytesread;
+        return bytesRead;
     }
 
     /**
@@ -84,14 +90,16 @@ public class RingBuffer {
     public int write(byte[] buffer, final int bytes) {
         int remaining;
         if ((remaining = checkSpace(true)) == 0) {
-            Log.e(RingBuffer.class.getSimpleName(), "Buffer overrun. Data will not be written");
+            Log.e(TAG, "Buffer overrun. Data will not be written");
             return 0;
         }
-        final int byteswrite = bytes > remaining ? remaining : bytes;
-        for (int i = 0; i < byteswrite; ++i) {
-            this.buffer[wp++] = buffer[i];
-            if (wp == size) wp = 0;
+        final int bytesWrite = bytes > remaining ? remaining : bytes;
+        for (int i = 0; i < bytesWrite; ++i) {
+            this.buffer[writePoint++] = buffer[i];
+            if (writePoint == allSize) {
+                writePoint = 0;
+            }
         }
-        return byteswrite;
+        return bytesWrite;
     }
 }
