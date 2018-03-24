@@ -10,6 +10,8 @@ import android.util.Log;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * Created by Administrator on 3/23/2018.
@@ -17,6 +19,11 @@ import java.io.IOException;
 
 public class LameRecorder {
     private static final String TAG = LameRecorder.class.getSimpleName();
+    private OnRecordListener onRecordListener;
+
+    public void setOnRecordListener(OnRecordListener onRecordListener) {
+        this.onRecordListener = onRecordListener;
+    }
 
     static {
         System.loadLibrary("mp3lame");
@@ -89,9 +96,12 @@ public class LameRecorder {
             public void run() {
                 isRecording = true;
                 while (isRecording) {
-                    int bytes = audioRecord.read(buffer, 0, bufferSize);
-                    if (bytes > 0) {
-                        ringBuffer.write(buffer, bytes);
+                    int readSize = audioRecord.read(buffer, 0, bufferSize);
+                    if (onRecordListener != null) {
+                        onRecordListener.onRecording(getVolume(readSize, buffer));
+                    }
+                    if (readSize > 0) {
+                        ringBuffer.write(buffer, readSize);
                     }
                 }
 
@@ -126,16 +136,48 @@ public class LameRecorder {
         }.start();
     }
 
+    public static short getShort(byte[] b, int index) {
+        return (short) (((b[index + 1] << 8) | b[index] & 0xff));
+    }
 
-    private void getVolume(int r, byte[] buffer1) {
-        long v = 0;
-        // 将 buffer 内容取出，进行平方和运算
-        for (int i = 0; i < buffer1.length; i++) {
-            v += buffer1[i] * buffer1[i];
+    public static byte[] toByteArray(short[] src) {
+        int count = src.length;
+        byte[] dest = new byte[count << 1];
+        for (int i = 0; i < count; i++) {
+            dest[i * 2] = (byte) (src[i]);
+            dest[i * 2 + 1] = (byte) (src[i] >> 8);
         }
-        // 平方和除以数据总长度，得到音量大小。
-        double mean = v / (double) r;
-        double volume = 10 * Math.log10(mean);
+        return dest;
+    }
+
+    public static short[] toShortArray(byte[] src) {
+        int count = src.length >> 1;
+        short[] dest = new short[count];
+        for (int i = 0; i < count; i++) {
+            dest[i] = (short) ((src[i * 2] & 0xff) | ((src[2 * i + 1] & 0xff) << 8));
+        }
+        return dest;
+    }
+
+    /**
+     * 采样值为16bit时，根据pcm数据获取分贝
+     *
+     * @param readSize
+     * @param buffer1
+     */
+    public static double getVolume(int readSize, byte[] buffer1) {
+        double sum = 0;
+        short[] innerBuf = new short[readSize / 2];
+        ByteBuffer.wrap(buffer1).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(innerBuf);
+        double sample;
+        for (short rawSample : innerBuf) {
+            sample = rawSample / 65535.0;
+            sum += sample * sample;
+        }
+        double rms = Math.sqrt(sum / readSize);
+        double db = 20 * Math.log10(rms) + 70;
+        Log.d(TAG, "读取到的音量是：" + db);
+        return db*3;
     }
 
     /**
@@ -194,5 +236,9 @@ public class LameRecorder {
         encodeThread.start();
         audioRecord.setRecordPositionUpdateListener(encodeThread, encodeThread.getHandler());
         audioRecord.setPositionNotificationPeriod(FRAME_COUNT);
+    }
+
+    public interface OnRecordListener {
+        void onRecording(double decibel);
     }
 }

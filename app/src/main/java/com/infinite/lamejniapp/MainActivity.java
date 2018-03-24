@@ -12,11 +12,13 @@ import android.widget.Button;
 import com.infinite.lamejniapp.lame.LameRecorder;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LameRecorder.OnRecordListener {
     private Button btStart;
     private Button btStop;
     private LameRecorder lameRecorder;
+    private VoiceView voiceView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,8 +26,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         btStart = findViewById(R.id.btStart);
         btStop = findViewById(R.id.btStop);
+        voiceView = findViewById(R.id.voiceView);
         lameRecorder = new LameRecorder();
-
+        lameRecorder.setOnRecordListener(this);
 
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.RECORD_AUDIO)
@@ -120,5 +123,15 @@ public class MainActivity extends AppCompatActivity {
             default:
                 break;
         }
+    }
+
+    @Override
+    public void onRecording(final double decibel) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                voiceView.setValue((float) decibel*4);
+            }
+        });
     }
 }
